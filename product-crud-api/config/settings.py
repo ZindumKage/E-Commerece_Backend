@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     MAIL_PORT: int
     MAIL_FROM: str
     BASE_URL: str
+    FLUTTERWAVE_SECRET_KEY: str
+    FLUTTERWAVE_PUBLIC_KEY: str
+    FLUTTERWAVE_ENCRYPTION_KEY: str
+    FLUTTERWAVE_BASE_URL: str
+    FLUTTERWAVE_WEBHOOK_SECRET: str
 
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", extra="ignore")
 

@@ -9,13 +9,14 @@ from app.database import Base
 from app.models.user import User
 from app.models.product import Product
 from app.models.refresh_token import RefreshToken
+from app.models.order import Order
+from app.models.order_item import OrderItem
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# IMPORTANT
 target_metadata = Base.metadata
 
 

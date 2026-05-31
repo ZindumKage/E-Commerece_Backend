@@ -1,8 +1,8 @@
 # Product CRUD API
 
-A RESTful Product Management API built with FastAPI, MySQL, SQLAlchemy, and Pydantic.
+A RESTful Product Management API built with FastAPI, MySQL, SQLAlchemy, Pydantic, JWT Authentication, Order Management, and Flutterwave Payment Integration.
 
-Repository: [E-Commerece_Backend](https://github.com/ZindumKage/E-Commerece_Backend?utm_source=chatgpt.com)
+Repository: https://github.com/ZindumKage/E-Commerece_Backend
 
 ---
 
@@ -32,13 +32,40 @@ Repository: [E-Commerece_Backend](https://github.com/ZindumKage/E-Commerece_Back
 ## Roles
 
 ### Admin
+
 - Create products
 - Update products
 - Delete products
 - View products
 
 ### User
+
 - View products only
+- Create orders
+- View orders
+- Make payments
+
+## Order Management
+
+- Create Orders
+- View User Orders
+- View Single Order
+- Multi-Product Orders
+- Automatic Total Price Calculation
+- Order Status Management
+- Stock Quantity Validation
+- Stock Quantity Reduction
+
+## Payment Integration
+
+- Flutterwave Payment Integration
+- Payment Initialization
+- Payment Verification
+- Webhook Verification
+- Transaction Reference Tracking
+- Duplicate Payment Prevention
+- Automatic Order Status Updates
+- Sandbox Payment Testing
 
 ## Security Features
 
@@ -61,20 +88,26 @@ Repository: [E-Commerece_Backend](https://github.com/ZindumKage/E-Commerece_Back
 - SQLAlchemy ORM
 - Alembic Database Migrations
 - Environment Variable Support
+- Structured Logging
+- Error Handling
+- Service Layer Architecture
+- Controller Layer Architecture
 
 ---
 
 # Tech Stack
 
 - Python
-- [FastAPI](chatgpt://generic-entity?number=0)
-- [MySQL](chatgpt://generic-entity?number=1)
-- [SQLAlchemy](chatgpt://generic-entity?number=2)
-- [Pydantic](chatgpt://generic-entity?number=3)
-- [Alembic](chatgpt://generic-entity?number=4)
-- [Redis](chatgpt://generic-entity?number=5)
+- FastAPI
+- MySQL
+- SQLAlchemy
+- Pydantic
+- Alembic
+- Redis
 - JWT Authentication
 - bcrypt
+- Flutterwave
+- ngrok
 - Uvicorn
 
 ---
@@ -94,24 +127,42 @@ E-Commerece_Backend/
 │   │   ├── jwt_handler.py
 │   │   └── token_hash.py
 │   │
+│   ├── controllers/
+│   │   ├── order.py
+│   │   └── payment.py
+│   │
+│   ├── services/
+│   │   ├── order.py
+│   │   ├── payment.py
+│   │   └── flutterwave.py
+│   │
 │   ├── helper/
 │   │   └── time_helper.py
+│   │
+│   ├── core/
+│   │   └── logger.py
 │   │
 │   ├── models/
 │   │   ├── product.py
 │   │   ├── user.py
-│   │   └── refresh_token.py
+│   │   ├── refresh_token.py
+│   │   ├── order.py
+│   │   └── order_item.py
 │   │
 │   ├── schemas/
 │   │   ├── product.py
-│   │   └── user.py
+│   │   ├── user.py
+│   │   └── order.py
 │   │
 │   ├── crud/
 │   │   └── product.py
 │   │
 │   ├── routes/
 │   │   ├── auth.py
-│   │   └── product.py
+│   │   ├── product.py
+│   │   ├── order.py
+│   │   ├── payment.py
+│   │   └── webhook.py
 │   │
 │   └── utils/
 │       └── mail.py
@@ -184,6 +235,12 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 
 BASE_URL=http://127.0.0.1:8000
+
+FLUTTERWAVE_SECRET_KEY=your_flutterwave_secret_key
+FLUTTERWAVE_PUBLIC_KEY=your_flutterwave_public_key
+FLUTTERWAVE_BASE_URL=https://api.flutterwave.com/v3
+
+FLUTTERWAVE_SECRET_HASH=your_webhook_secret_hash
 ```
 
 ---
@@ -350,6 +407,25 @@ POST /auth/reset-password/{token}
 
 ---
 
+# Order Lifecycle
+
+```txt
+Pending → Paid / Failed
+```
+
+### Workflow
+
+1. User creates order
+2. System calculates total price
+3. Payment is initialized
+4. Flutterwave checkout page opens
+5. User completes payment
+6. Flutterwave triggers webhook
+7. Backend verifies payment
+8. Order status updates automatically
+
+---
+
 # Validation Rules
 
 ## Product Validation
@@ -365,6 +441,13 @@ POST /auth/reset-password/{token}
 - Verification tokens expire after 24 hours
 - Reset tokens expire after 1 hour
 - Refresh tokens expire after 3 days
+
+## Order Validation
+
+- Product must exist
+- Quantity must be greater than 0
+- Product stock must be available
+- Total price is calculated automatically
 
 ---
 
@@ -422,6 +505,94 @@ Depends(require_admin)
 
 ---
 
+## Order Endpoints
+
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/orders/` | Authenticated User | Create Order |
+| GET | `/orders/my-orders` | Authenticated User | Get User Orders |
+| GET | `/orders/{order_id}` | Authenticated User | Get Single Order |
+
+---
+
+## Payment Endpoints
+
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/payments/initialize/{order_id}` | Authenticated User | Initialize Payment |
+| GET | `/payments/verify/{tx_ref}` | Public | Verify Payment |
+| POST | `/webhooks/flutterwave` | Flutterwave | Flutterwave Webhook |
+
+---
+
+# Flutterwave Setup
+
+Create a Flutterwave account.
+
+Get your test API keys from the Flutterwave dashboard.
+
+---
+
+# Webhook Setup
+
+Expose your local server using ngrok:
+
+```bash
+ngrok http 8000
+```
+
+Example:
+
+```txt
+https://abcd1234.ngrok-free.app
+```
+
+Set Flutterwave webhook URL:
+
+```txt
+https://abcd1234.ngrok-free.app/webhooks/flutterwave
+```
+
+---
+
+# Payment Verification Flow
+
+Flutterwave redirects after payment:
+
+```txt
+/payment-success?status=successful&tx_ref=xxx&transaction_id=xxx
+```
+
+Backend verification endpoint:
+
+```http
+GET /payments/verify/{tx_ref}?transaction_id=123456
+```
+
+Verification checks:
+
+- Payment status
+- Transaction reference validation
+- Amount validation
+- Duplicate payment prevention
+
+---
+
+# Logging & Error Handling
+
+The backend includes:
+
+- Structured logging
+- HTTP exception handling
+- Database validation
+- Authentication validation
+- Payment validation
+- Webhook validation
+- Stock validation
+- Duplicate payment protection
+
+---
+
 # Example Request
 
 ## Create Product
@@ -458,6 +629,91 @@ Authorization: Bearer <access_token>
   "price": 1200,
   "description": "Apple smartphone",
   "stock_quantity": 10
+}
+```
+
+---
+
+# Example Order Request
+
+## Create Order
+
+### Request
+
+```http
+POST /orders/
+```
+
+### Headers
+
+```http
+Authorization: Bearer <access_token>
+```
+
+### Request Body
+
+```json
+{
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 1
+    },
+    {
+      "product_id": 2,
+      "quantity": 2
+    }
+  ]
+}
+```
+
+### Response
+
+```json
+{
+  "id": 5,
+  "user_id": 1,
+  "total_price": 3250000,
+  "status": "pending"
+}
+```
+
+---
+
+# Example Payment Initialization
+
+## Request
+
+```http
+POST /payments/initialize/5
+```
+
+## Response
+
+```json
+{
+  "payment_link": "https://checkout.flutterwave.com/...",
+  "tx_ref": "uuid-reference"
+}
+```
+
+---
+
+# Example Payment Verification
+
+## Request
+
+```http
+GET /payments/verify/{tx_ref}?transaction_id=123456
+```
+
+## Response
+
+```json
+{
+  "message": "Payment verified successfully",
+  "order_id": 5,
+  "payment_status": "paid"
 }
 ```
 

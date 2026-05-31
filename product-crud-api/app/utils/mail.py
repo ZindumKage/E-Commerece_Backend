@@ -25,17 +25,20 @@ async def send_verification_email(
     email: str,
     token: str,
 ):
-    verification_link = (
-        f"{settings.BASE_URL}/auth/verify/{token}"
-    )
 
     message = MessageSchema(
         subject="Verify Your Email",
         recipients=[email],
         body=f"""
-Click the link below to verify your email:
 
-{verification_link}
+Your email verification code is:
+
+{token}
+
+This code expires in 10 minutes.
+
+
+
         """,
         subtype="plain",
     )
@@ -49,17 +52,20 @@ async def send_reset_mail(
     email: str,
     token: str,
 ):
-    reset_link = (
-        f"{settings.BASE_URL}/auth/reset-password/{token}"
-    )
 
     message = MessageSchema(
         subject="Reset Your Password",
         recipients=[email],
         body=f"""
-Click the link below to reset your password:
 
-{reset_link}
+Your password reset code is:
+
+{token}
+
+This code expires in 10 minutes.
+
+
+
         """,
         subtype="plain",
     )
